@@ -53,12 +53,19 @@ function toMarkdown(body) {
 
 function convert(src, dst) {
   fs.readdirSync(src).forEach(function(p) {
-    console.log("converting " + p);
-    var html = fs.readFileSync(path.join(src, p), { encoding: "utf8" });
-    var body = cheerio.load(html)(".document");
-    var md = toMarkdown(body);
-    fs.writeFileSync(path.join(dst, p.slice(0, p.length - path.extname(p).length) + ".md"), md);
-  })
+    if (fs.statSync(path.join(src, p)).isDirectory()) {
+      convert(path.join(src, p), path.join(dst, p));
+    } else if (path.extname(p) == ".html") {
+      console.log("converting " + path.join(src, p));
+      var html = fs.readFileSync(path.join(src, p), { encoding: "utf8" });
+      var body = cheerio.load(html)(".document");
+      var md = toMarkdown(body);
+      try {
+        fs.mkdirSync(dst);
+      } catch (e) {}
+      fs.writeFileSync(path.join(dst, p.slice(0, p.length - path.extname(p).length) + ".md"), md);
+    }
+  });
 }
 
 convert(process.argv[2], process.argv[3]);
