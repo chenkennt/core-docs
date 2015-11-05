@@ -88,6 +88,8 @@ function sanitize(body, srcPath, dstPath) {
       fs.createReadStream(path.join(srcPath, u.pathname)).pipe(fs.createWriteStream(path.join(dstPath, u.pathname)));
     }
   });
+  // 12. Fix table
+  remove(body, "table > colgroup");
 
   return body;
 }
