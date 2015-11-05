@@ -32,7 +32,9 @@ function changeExt(p, ext) {
   return p.slice(0, p.length - path.extname(p).length) + ext;
 }
 
-function fixInternalLink(href) {
+function fixLink(href) {
+  // encode () as markdown cannot handle them in links well
+  href = href.replace("(", "%28").replace(")", "%29");
   var u = url.parse(href);
   if (!u.host && u.pathname && !path.isAbsolute(u.pathname)) {
     if (path.extname(u.pathname) != ".html") console.log("invalid internal link: " + href);
@@ -75,7 +77,7 @@ function sanitize(body, srcPath, dstPath) {
   removeTag(body, "div, span");
   // 10. Fix links, change .html to .md for internal links
   visit(body, "a", function(e) {
-    e.attr("href", fixInternalLink(e.attr("href")));
+    e.attr("href", fixLink(e.attr("href")));
   });
   // 11. Copy images
   visit(body, "img", function(e) {
@@ -100,7 +102,7 @@ function toToc(toc, prefix) {
   toc.children("li").each(function(i, c) {
     var child = cheerio(c);
     var link = child.children("a");
-    content += prefix + " [" + link.text() + "](" + fixInternalLink(link.attr("href")) + ")\n";
+    content += prefix + " [" + link.text() + "](" + fixLink(link.attr("href")) + ")\n";
     content += toToc(child.children("ul"), prefix + "#");
   });
   return content;
