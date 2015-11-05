@@ -2,7 +2,7 @@ var fs = require("fs");
 var path = require("path");
 var url = require("url");
 var cheerio = require("cheerio");
-var toMd = require("to-markdown");
+var toMarkdown = require("to-markdown");
 
 function remove(element, selector) {
   element.find(selector).remove();
@@ -32,7 +32,17 @@ function changeExt(p, ext) {
   return p.slice(0, p.length - path.extname(p).length) + ext;
 }
 
-function toMarkdown(body, srcPath, dstPath) {
+function fixInternalLink(href) {
+  var u = url.parse(href);
+  if (!u.host && u.pathname && !path.isAbsolute(u.pathname)) {
+    if (path.extname(u.pathname) != ".html") console.log("invalid internal link: " + href);
+    u.pathname = changeExt(u.pathname, ".md");
+    return url.format(u);
+  }
+  return href;
+}
+
+function sanitize(body, srcPath, dstPath) {
   // Convert RTD html to a plain html
   // 1. Remove <noscript> and its children
   remove(body, "noscript");
@@ -59,19 +69,15 @@ function toMarkdown(body, srcPath, dstPath) {
     });
     return "<blockquote>" + e.html() + "</blockquote>";
   });
-  // 8. Remove <div> and <span>
+  // 8. Remove problematic links
+  removeTag(body, "a:has(span.problematic)");
+  // 9. Remove <div> and <span>
   removeTag(body, "div, span");
-  // 9. Fix links, change .html to .md for internal links
+  // 10. Fix links, change .html to .md for internal links
   visit(body, "a", function(e) {
-    var href = e.attr("href");
-    var u = url.parse(href);
-    if (!u.host && u.pathname && !path.isAbsolute(u.pathname)) {
-      if (path.extname(u.pathname) != ".html") console.log("invalid internal link: " + href);
-      u.pathname = changeExt(u.pathname, ".md");
-      e.attr("href", url.format(u));
-    }
+    e.attr("href", fixInternalLink(e.attr("href")));
   });
-  // 10. Copy images
+  // 11. Copy images
   visit(body, "img", function(e) {
     var href = e.attr("src");
     var u = url.parse(href);
@@ -83,7 +89,19 @@ function toMarkdown(body, srcPath, dstPath) {
     }
   });
 
-  return toMd(body.html(), { gfm: true });
+  return body;
+}
+
+function toToc(toc, prefix) {
+  var content = "";
+  if (prefix === undefined) prefix = "#";
+  toc.children("li").each(function(i, c) {
+    var child = cheerio(c);
+    var link = child.children("a");
+    content += prefix + " [" + link.text() + "](" + fixInternalLink(link.attr("href")) + ")\n";
+    content += toToc(child.children("ul"), prefix + "#");
+  });
+  return content;
 }
 
 function convert(src, dst) {
@@ -93,11 +111,16 @@ function convert(src, dst) {
     } else if (path.extname(p) == ".html") {
       console.log("converting " + path.join(src, p));
       var html = fs.readFileSync(path.join(src, p), { encoding: "utf8" });
+      var md = "";
       var body = cheerio.load(html)(".document");
-      var md = toMarkdown(body, src, dst);
+      var toc = body.find("#topics > div > ul");
+      if (toc.length > 0) md = toToc(toc);
+      else md = toMarkdown(sanitize(body, src, dst).html(), { gfm: true });
       try {
         fs.mkdirSync(dst);
       } catch (e) {}
+      // Fix wrench icon
+      md = md.replace(/\|stub\-icon\|/g, "🔧");
       fs.writeFileSync(path.join(dst, p.slice(0, p.length - path.extname(p).length) + ".md"), md);
     }
   });
