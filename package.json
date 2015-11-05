@@ -1,0 +1,27 @@
+{
+  "name": "convert",
+  "version": "1.0.0",
+  "description": "",
+  "main": "convert.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "dependencies": {
+    "cheerio": "^0.19.0",
+    "to-markdown": "^2.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chenkennt/core-docs.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chenkennt/core-docs/issues"
+  },
+  "homepage": "https://github.com/chenkennt/core-docs#readme"
+}
