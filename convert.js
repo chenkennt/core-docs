@@ -62,7 +62,18 @@ function sanitize(body, srcPath, dstPath) {
   });
   // 6. Fix code block
   replace(body, "div.highlight > pre", function(e) {
-    return "<pre><code>" + e.html() + "</code></pre>";
+    var lang = e.parent().parent().attr("class");
+    switch (lang) {
+      case "highlight-c#": lang = "highlight-cs"; break;
+      case "highlight-vb.net": lang = "highlight-vbnet"; break;
+      case "highlight-c":
+      case "highlight-json":
+      case "highlight-console": break;
+      default: console.log("uncognized language: " + lang); break;
+    }
+    // use language and replace to div later
+    if (lang) return "<language class='highlight " + lang + "'><pre>" + e.html() + "</pre></language>";
+    else return "<pre><code>" + e.html() + "</code></pre>";
   });
   // 7. Fix note, change <div class="note"> to <blockquote>
   replace(body, "div.note", function(e) {
@@ -75,11 +86,15 @@ function sanitize(body, srcPath, dstPath) {
   removeTag(body, "a:has(span.problematic)");
   // 9. Remove <div> and <span>
   removeTag(body, "div, span");
-  // 10. Fix links, change .html to .md for internal links
+  // 10. Change language back to div
+  replace(body, "language", function(e) {
+    return "<div class='" + e.attr("class") + "'>" + e.html() + "</div>";
+  });
+  // 11. Fix links, change .html to .md for internal links
   visit(body, "a", function(e) {
     e.attr("href", fixLink(e.attr("href")));
   });
-  // 11. Copy images
+  // 12. Copy images
   visit(body, "img", function(e) {
     var href = e.attr("src");
     var u = url.parse(href);
@@ -90,7 +105,7 @@ function sanitize(body, srcPath, dstPath) {
       fs.createReadStream(path.join(srcPath, u.pathname)).pipe(fs.createWriteStream(path.join(dstPath, u.pathname)));
     }
   });
-  // 12. Fix table
+  // 13. Fix table
   remove(body, "table > colgroup");
 
   return body;

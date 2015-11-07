@@ -16,8 +16,8 @@ sometimes described with this format (e.g. WinRT).
     component metadata, and the resulting component is said to be
     self-describing -- from ECMA 335 I.9.1, Components and assemblies.
 
-The format is fully specified and standardized as `ECMA
-335 <dotnet-standards.md>`__. All .NET compilers and runtimes use this
+The format is fully specified and standardized as ECMA
+335. All .NET compilers and runtimes use this
 format. The presense of a documented and infrequently updated binary
 format has been a major benefit (arguably a requirement) for
 interoperatibility. The format was last updated in a substantive way in
