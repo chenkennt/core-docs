@@ -1,3 +1,6 @@
+# THESE INSTRUCTIONS ARE DEPRECATED
+The brew formula is no longer maintained. To get started with .NET Core on MacOS, look at this link: https://docs.microsoft.com/en-us/dotnet/core/get-started?tabs=macos
+
 # Installing .NET Core on OS X
 
 By [Zlatko Knezevic](https://github.com/blackdwarf)
